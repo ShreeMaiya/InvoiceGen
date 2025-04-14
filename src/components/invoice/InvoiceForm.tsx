@@ -158,12 +158,12 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
     // Convert all numeric values properly
     const submissionData = {
       ...formData,
-      taxRate: parseFloat(formData.taxRate?.toString() || "0"),
-      discount: parseFloat(formData.discount?.toString() || "0"),
+      taxRate: formData.taxRate || 0,
+      discount: formData.discount || 0,
       items: formData.items.map(item => ({
         ...item,
-        rate: parseFloat(item.rate?.toString() || "0"),
-        quantity: parseInt(item.quantity?.toString() || "1")
+        rate: Number(item.rate) || 0,
+        quantity: Number(item.quantity) || 1
       }))
     };
     onSubmit(submissionData);
@@ -307,7 +307,6 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
                   onChange={handleChange}
                   placeholder="Your business address"
                   rows={3}
-                  required
                 />
               </div>
             </div>
@@ -351,7 +350,6 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
                   onChange={handleChange}
                   placeholder="Client address"
                   rows={3}
-                  required
                 />
               </div>
             </div>

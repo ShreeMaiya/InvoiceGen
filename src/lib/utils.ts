@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -6,13 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2,
-    currencyDisplay: 'symbol'
-  }).format(amount);
+export function formatCurrency(amount: number | string): string {
+  // Convert to number if it's a string
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  // Using the Unicode escape sequence for the Indian Rupee symbol
+  // and ensuring proper formatting with 2 decimal places
+  return '\u20B9' + numAmount.toFixed(2);
 }
 
 export function generateRandomId(length: number = 8): string {

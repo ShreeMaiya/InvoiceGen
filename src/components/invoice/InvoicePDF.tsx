@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "@react-pdf/renderer";
+import { View, Text, StyleSheet, Document, Page } from "@react-pdf/renderer";
 import { formatCurrency } from "@/lib/utils";
 import { InvoiceData } from "./InvoiceForm";
 import { format } from "date-fns";
@@ -33,112 +33,143 @@ const InvoicePDF = ({ invoiceData }: InvoicePDFProps) => {
     return calculateNetPrice() + calculateTax();
   };
 
+  // Helper function to safely render text
+  const renderText = (content: string | number | null | undefined) => {
+    if (content === null || content === undefined || content === "") {
+      return "0";
+    }
+    return content.toString();
+  };
+
+  // Simple number formatting function
+  const formatNumber = (num: number): string => {
+    // Ensure num is a valid number
+    const validNum = Number(num) || 0;
+    // Convert to string with exactly 1 decimal place (changed from 2)
+    const numStr = validNum.toFixed(1);
+    // Split into parts
+    const parts = numStr.split('.');
+    // Format the integer part with commas
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // Return the formatted number
+    return parts.join('.');
+  };
+
+  // Use this function for all currency displays in the PDF
+  const formatCurrencyForPDF = (num: number): string => {
+    return `Rs. ${formatNumber(num)}`; // Using "Rs." instead of ₹ symbol for better compatibility
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>INVOICE</Text>
-          <Text style={styles.invoiceNumber}>#{invoiceData.invoiceNumber}</Text>
-        </View>
-        <View style={styles.dates}>
-          <Text style={styles.date}>
-            Date: {format(invoiceData.invoiceDate, "PPP")}
-          </Text>
-          <Text style={styles.date}>
-            Due Date: {format(invoiceData.dueDate, "PPP")}
-          </Text>
-        </View>
-      </View>
-
-      {/* Addresses */}
-      <View style={styles.addresses}>
-        <View style={styles.addressBlock}>
-          <Text style={styles.addressTitle}>From:</Text>
-          <Text style={styles.addressName}>{invoiceData.fromName}</Text>
-          <Text style={styles.addressText}>{invoiceData.fromEmail}</Text>
-          <Text style={styles.addressText}>{invoiceData.fromAddress}</Text>
-        </View>
-        <View style={styles.addressBlock}>
-          <Text style={styles.addressTitle}>Bill To:</Text>
-          <Text style={styles.addressName}>{invoiceData.toName}</Text>
-          <Text style={styles.addressText}>{invoiceData.toEmail}</Text>
-          <Text style={styles.addressText}>{invoiceData.toAddress}</Text>
-        </View>
-      </View>
-
-      {/* Items */}
-      <View style={styles.items}>
-        <View style={styles.itemsHeader}>
-          <Text style={[styles.itemColumn, { flex: 2 }]}>Item</Text>
-          <Text style={[styles.itemColumn, { flex: 3 }]}>Description</Text>
-          <Text style={[styles.itemColumn, { flex: 1 }]}>Qty</Text>
-          <Text style={[styles.itemColumn, { flex: 1 }]}>Price</Text>
-          <Text style={[styles.itemColumn, { flex: 1 }]}>Amount</Text>
-        </View>
-        {invoiceData.items.map((item) => (
-          <View key={item.id} style={styles.itemRow}>
-            <Text style={[styles.itemColumn, { flex: 2 }]}>{item.name}</Text>
-            <Text style={[styles.itemColumn, { flex: 3 }]}>{item.description}</Text>
-            <Text style={[styles.itemColumn, { flex: 1 }]}>{item.quantity}</Text>
-            <Text style={[styles.itemColumn, { flex: 1 }]}>
-              {formatCurrency(item.rate || 0)}
-            </Text>
-            <Text style={[styles.itemColumn, { flex: 1 }]}>
-              {formatCurrency((item.rate || 0) * item.quantity)}
-            </Text>
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>INVOICE</Text>
+              <Text style={styles.invoiceNumber}>#{renderText(invoiceData.invoiceNumber)}</Text>
+            </View>
+            <View style={styles.dates}>
+              <Text style={styles.date}>
+                Date: {format(invoiceData.invoiceDate, "PPP")}
+              </Text>
+              <Text style={styles.date}>
+                Due Date: {format(invoiceData.dueDate, "PPP")}
+              </Text>
+            </View>
           </View>
-        ))}
-      </View>
 
-      {/* Summary Section */}
-      <View style={styles.summarySection}>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Subtotal:</Text>
-          <Text style={styles.summaryValue}>{formatCurrency(calculateSubtotal())}</Text>
-        </View>
-        {invoiceData.discount > 0 && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>
-              Discount ({invoiceData.discount || 0}%):
-            </Text>
-            <Text style={styles.summaryValue}>- {formatCurrency(calculateDiscount())}</Text>
+          {/* Addresses */}
+          <View style={styles.addresses}>
+            <View style={styles.addressBlock}>
+              <Text style={styles.addressTitle}>From:</Text>
+              <Text style={styles.addressName}>{renderText(invoiceData.fromName)}</Text>
+              <Text style={styles.addressText}>{renderText(invoiceData.fromEmail)}</Text>
+              <Text style={styles.addressText}>{renderText(invoiceData.fromAddress)}</Text>
+            </View>
+            <View style={styles.addressBlock}>
+              <Text style={styles.addressTitle}>Bill To:</Text>
+              <Text style={styles.addressName}>{renderText(invoiceData.toName)}</Text>
+              <Text style={styles.addressText}>{renderText(invoiceData.toEmail)}</Text>
+              <Text style={styles.addressText}>{renderText(invoiceData.toAddress)}</Text>
+            </View>
           </View>
-        )}
-        <View style={[styles.summaryRow, styles.netPrice]}>
-          <Text style={[styles.summaryLabel, styles.mediumText]}>Net Price:</Text>
-          <Text style={[styles.summaryValue, styles.mediumText]}>
-            {formatCurrency(calculateNetPrice())}
-          </Text>
-        </View>
-        {invoiceData.taxRate > 0 && (
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>
-              Tax ({invoiceData.taxRate || 0}%):
-            </Text>
-            <Text style={styles.summaryValue}>+ {formatCurrency(calculateTax())}</Text>
-          </View>
-        )}
-        <View style={[styles.summaryRow, styles.totalRow]}>
-          <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalValue}>{formatCurrency(calculateTotal())}</Text>
-        </View>
-      </View>
 
-      {/* Notes */}
-      {invoiceData.notes && (
-        <View style={styles.notes}>
-          <Text style={styles.notesTitle}>Notes:</Text>
-          <Text style={styles.notesText}>{invoiceData.notes}</Text>
+          {/* Items */}
+          <View style={styles.items}>
+            <View style={styles.itemsHeader}>
+              <Text style={[styles.itemColumn, { flex: 2 }]}>Item</Text>
+              <Text style={[styles.itemColumn, { flex: 3 }]}>Description</Text>
+              <Text style={[styles.itemColumn, { flex: 1 }]}>Qty</Text>
+              <Text style={[styles.itemColumn, { flex: 1 }]}>Price</Text>
+              <Text style={[styles.itemColumn, { flex: 1 }]}>Amount</Text>
+            </View>
+            {invoiceData.items.map((item) => {
+              const rate = parseFloat(renderText(item.rate));
+              const quantity = parseFloat(renderText(item.quantity));
+              return (
+                <View key={item.id} style={styles.itemRow}>
+                  <Text style={[styles.itemColumn, { flex: 2 }]}>{renderText(item.name)}</Text>
+                  <Text style={[styles.itemColumn, { flex: 3 }]}>{renderText(item.description)}</Text>
+                  <Text style={[styles.itemColumn, { flex: 1 }]}>{formatNumber(quantity)}</Text>
+                  <Text style={[styles.itemColumn, { flex: 1 }]}>
+                    {formatCurrencyForPDF(rate)}
+                  </Text>
+                  <Text style={[styles.itemColumn, { flex: 1 }]}>
+                    {formatCurrencyForPDF(rate * quantity)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+
+          {/* Summary Section */}
+          <View style={styles.summarySection}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal:</Text>
+              <Text style={styles.summaryValue}>{formatCurrencyForPDF(calculateSubtotal())}</Text>
+            </View>
+            {invoiceData.discount > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Discount ({renderText(invoiceData.discount)}%):
+                </Text>
+                <Text style={styles.summaryValue}>- {formatCurrencyForPDF(calculateDiscount())}</Text>
+              </View>
+            )}
+            <View style={[styles.summaryRow, styles.netPrice]}>
+              <Text style={[styles.summaryLabel, styles.mediumText]}>Net Price:</Text>
+              <Text style={[styles.summaryValue, styles.mediumText]}>
+                {formatCurrencyForPDF(calculateNetPrice())}
+              </Text>
+            </View>
+            {invoiceData.taxRate > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>
+                  Tax ({renderText(invoiceData.taxRate)}%):
+                </Text>
+                <Text style={styles.summaryValue}>+ {formatCurrencyForPDF(calculateTax())}</Text>
+              </View>
+            )}
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalValue}>{formatCurrencyForPDF(calculateTotal())}</Text>
+            </View>
+          </View>
         </View>
-      )}
-    </View>
+      </Page>
+    </Document>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  page: {
     padding: 30,
+    fontFamily: "Helvetica",
+  },
+  container: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
@@ -236,22 +267,7 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 12,
     fontFamily: "Helvetica-Bold",
-  },
-  notes: {
-    marginTop: 30,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#e5e5e5",
-  },
-  notesTitle: {
-    fontSize: 10,
-    fontFamily: "Helvetica-Bold",
-    marginBottom: 4,
-  },
-  notesText: {
-    fontSize: 10,
-    color: "#666",
-  },
+  }
 });
 
 export default InvoicePDF;

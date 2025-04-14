@@ -5,18 +5,18 @@ import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 import { InvoiceData } from "./InvoiceForm";
 import { useToast } from "@/hooks/use-toast";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import InvoicePDF from "./InvoicePDF";
 
 interface InvoiceActionButtonsProps {
   data: InvoiceData;
   onBack: () => void;
-  downloadPDF: () => Promise<void>;
   calculateTotal: () => number;
 }
 
 const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({ 
   data, 
   onBack, 
-  downloadPDF,
   calculateTotal
 }) => {
   const { toast } = useToast();
@@ -44,6 +44,15 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
     });
   };
 
+  const handlePDFError = (error: Error) => {
+    console.error("PDF Generation Error:", error);
+    toast({
+      title: "Error",
+      description: `Failed to generate PDF: ${error.message}`,
+      variant: "destructive",
+    });
+  };
+
   return (
     <div className="space-y-8">
       <Button
@@ -55,13 +64,42 @@ const InvoiceActionButtons: React.FC<InvoiceActionButtonsProps> = ({
       </Button>
 
       <div className="flex flex-col items-center gap-4 max-w-md mx-auto">
-        <Button
-          className="flex items-center gap-3 bg-primary text-primary-foreground text-lg py-6 px-8 rounded-full shadow-lg hover:shadow-xl transition-all"
-          onClick={downloadPDF}
+        <PDFDownloadLink
+          document={<InvoicePDF invoiceData={data} />}
+          fileName={`Invoice-${data.invoiceNumber}.pdf`}
+          className="w-full"
+          onClick={() => {
+            console.log("Starting PDF generation...");
+            toast({
+              title: "Generating PDF",
+              description: "Please wait while we generate your invoice...",
+            });
+          }}
         >
-          <Download className="h-6 w-6" />
-          Download Invoice
-        </Button>
+          {({ loading, error }) => {
+            if (error) {
+              handlePDFError(error);
+              return (
+                <Button
+                  className="flex items-center gap-3 bg-destructive text-destructive-foreground text-lg py-6 px-8 rounded-full shadow-lg hover:shadow-xl transition-all w-full"
+                  onClick={() => window.location.reload()}
+                >
+                  <Download className="h-6 w-6" />
+                  Retry Download
+                </Button>
+              );
+            }
+            return (
+              <Button
+                className="flex items-center gap-3 bg-primary text-primary-foreground text-lg py-6 px-8 rounded-full shadow-lg hover:shadow-xl transition-all w-full"
+                disabled={loading}
+              >
+                <Download className="h-6 w-6" />
+                {loading ? "Generating PDF..." : "Download Invoice"}
+              </Button>
+            );
+          }}
+        </PDFDownloadLink>
 
         <div className="flex gap-4">
           <Button
