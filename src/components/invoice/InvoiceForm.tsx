@@ -130,16 +130,20 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
     );
   };
 
-  const calculateTax = () => {
-    return calculateSubtotal() * ((formData.taxRate || 0) / 100);
-  };
-
   const calculateDiscount = () => {
     return calculateSubtotal() * ((formData.discount || 0) / 100);
   };
 
+  const calculateNetPrice = () => {
+    return calculateSubtotal() - calculateDiscount();
+  };
+
+  const calculateTax = () => {
+    return calculateNetPrice() * ((formData.taxRate || 0) / 100);
+  };
+
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax() - calculateDiscount();
+    return calculateNetPrice() + calculateTax();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -447,92 +451,87 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         </div>
       </motion.div>
 
-      {/* Tax and Notes Section */}
+      {/* Tax and Discount Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
-        className="grid md:grid-cols-2 gap-8"
+        className="space-y-6"
       >
-        <div>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Discount Section */}
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Additional Notes</h3>
-              <Textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                placeholder="Payment terms, delivery information, etc."
-                rows={4}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Tax & Discount</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                  <Input
-                    id="taxRate"
-                    name="taxRate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={formData.taxRate || ""}
-                    onChange={handleChange}
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="discount">Discount (%)</Label>
-                  <Input
-                    id="discount"
-                    name="discount"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={formData.discount || ""}
-                    onChange={handleChange}
-                    placeholder="0"
-                  />
-                </div>
+              <h3 className="text-lg font-medium mb-4">Discount</h3>
+              <div>
+                <Label htmlFor="discount">Discount Rate (%)</Label>
+                <Input
+                  id="discount"
+                  name="discount"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.discount || ""}
+                  onChange={handleChange}
+                  placeholder="0"
+                />
               </div>
             </CardContent>
           </Card>
 
+          {/* Tax Section */}
           <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span>{formatCurrency(calculateSubtotal())}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">
-                  Tax ({formData.taxRate || 0}%):
-                </span>
-                <span>{formatCurrency(calculateTax())}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">
-                  Discount ({formData.discount || 0}%):
-                </span>
-                <span>{formatCurrency(calculateDiscount())}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between items-center font-medium">
-                <span>Total:</span>
-                <span className="text-xl">{formatCurrency(calculateTotal())}</span>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-4">Tax</h3>
+              <div>
+                <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                <Input
+                  id="taxRate"
+                  name="taxRate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.taxRate || ""}
+                  onChange={handleChange}
+                  placeholder="0"
+                />
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Summary Card */}
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Subtotal:</span>
+              <span>{formatCurrency(calculateSubtotal())}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">
+                Discount ({formData.discount || 0}%):
+              </span>
+              <span>- {formatCurrency(calculateDiscount())}</span>
+            </div>
+            <div className="flex justify-between items-center font-medium">
+              <span>Net Price:</span>
+              <span>{formatCurrency(calculateNetPrice())}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">
+                Tax ({formData.taxRate || 0}%):
+              </span>
+              <span>+ {formatCurrency(calculateTax())}</span>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center font-medium">
+              <span>Total:</span>
+              <span className="text-xl">{formatCurrency(calculateTotal())}</span>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* Submit Button */}
