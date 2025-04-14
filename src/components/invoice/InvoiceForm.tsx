@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ export interface InvoiceData {
   invoiceNumber: string;
   invoiceDate: Date;
   dueDate: Date;
-  logo: string | null;
   fromName: string;
   fromEmail: string;
   fromAddress: string;
@@ -41,6 +39,7 @@ export interface InvoiceData {
   items: InvoiceItem[];
   notes: string;
   taxRate: number;
+  discount: number;
 }
 
 interface InvoiceFormProps {
@@ -53,7 +52,6 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
     invoiceNumber: `INV-${Math.floor(Math.random() * 10000).toString().padStart(4, "0")}`,
     invoiceDate: new Date(),
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-    logo: null,
     fromName: "",
     fromEmail: "",
     fromAddress: "",
@@ -66,11 +64,12 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         name: "",
         description: "",
         quantity: 1,
-        rate: 0,
+        rate: undefined,
       },
     ],
     notes: "",
-    taxRate: 0,
+    taxRate: undefined,
+    discount: undefined,
   });
 
   const handleChange = (
@@ -103,7 +102,7 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
           name: "",
           description: "",
           quantity: 1,
-          rate: 0,
+          rate: undefined,
         },
       ],
     }));
@@ -126,17 +125,21 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
 
   const calculateSubtotal = () => {
     return formData.items.reduce(
-      (total, item) => total + item.quantity * item.rate,
+      (total, item) => total + item.quantity * (item.rate || 0),
       0
     );
   };
 
   const calculateTax = () => {
-    return calculateSubtotal() * (formData.taxRate / 100);
+    return calculateSubtotal() * ((formData.taxRate || 0) / 100);
+  };
+
+  const calculateDiscount = () => {
+    return calculateSubtotal() * ((formData.discount || 0) / 100);
   };
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
+    return calculateSubtotal() + calculateTax() - calculateDiscount();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -151,22 +154,10 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="grid md:grid-cols-3 gap-8"
+        className="grid md:grid-cols-2 gap-8"
       >
-        {/* Logo Upload */}
-        <div>
-          <Label htmlFor="logo" className="text-base mb-3 block">
-            Business Logo
-          </Label>
-          <ImageUpload
-            value={formData.logo}
-            onChange={(value) => setFormData((prev) => ({ ...prev, logo: value }))}
-            className="max-w-80"
-          />
-        </div>
-
         {/* Invoice Details */}
-        <div className="md:col-span-2 space-y-4">
+        <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="invoiceNumber">Invoice Number</Label>
@@ -429,12 +420,12 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={item.rate}
+                      value={item.rate || ""}
                       onChange={(e) =>
                         handleItemChange(
                           item.id,
                           "rate",
-                          parseFloat(e.target.value) || 0
+                          parseFloat(e.target.value) || undefined
                         )
                       }
                       required
@@ -443,7 +434,7 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
                 </div>
                 <div className="mt-4 text-right">
                   <p className="text-sm text-muted-foreground">
-                    Subtotal: {formatCurrency(item.quantity * item.rate)}
+                    Subtotal: {formatCurrency(item.quantity * (item.rate || 0))}
                   </p>
                 </div>
               </CardContent>
@@ -478,18 +469,37 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         <div className="space-y-6">
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-medium mb-4">Tax Rate (%)</h3>
-              <Input
-                id="taxRate"
-                name="taxRate"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={formData.taxRate}
-                onChange={handleChange}
-                placeholder="0"
-              />
+              <h3 className="text-lg font-medium mb-4">Tax & Discount</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                  <Input
+                    id="taxRate"
+                    name="taxRate"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={formData.taxRate || ""}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="discount">Discount (%)</Label>
+                  <Input
+                    id="discount"
+                    name="discount"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={formData.discount || ""}
+                    onChange={handleChange}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -501,9 +511,15 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">
-                  Tax ({formData.taxRate}%):
+                  Tax ({formData.taxRate || 0}%):
                 </span>
                 <span>{formatCurrency(calculateTax())}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">
+                  Discount ({formData.discount || 0}%):
+                </span>
+                <span>{formatCurrency(calculateDiscount())}</span>
               </div>
               <Separator />
               <div className="flex justify-between items-center font-medium">
