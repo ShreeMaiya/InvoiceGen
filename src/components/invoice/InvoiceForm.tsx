@@ -154,11 +154,11 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="grid md:grid-cols-2 gap-8"
+        className="space-y-4"
       >
         {/* Invoice Details */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4 md:space-y-0">
+          <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="invoiceNumber">Invoice Number</Label>
               <Input
@@ -169,68 +169,72 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
                 placeholder="INV-0001"
               />
             </div>
-            <div>
-              <Label className="mb-2 block">Invoice Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.invoiceDate ? (
-                      format(formData.invoiceDate, "PPP")
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.invoiceDate}
-                    onSelect={(date) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        invoiceDate: date || new Date(),
-                      }))
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="invoiceDate">Invoice Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="invoiceDate"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.invoiceDate ? (
+                        format(formData.invoiceDate, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.invoiceDate}
+                      onSelect={(date) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          invoiceDate: date || new Date(),
+                        }))
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="dueDate"
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.dueDate ? (
+                        format(formData.dueDate, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={formData.dueDate}
+                      onSelect={(date) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          dueDate: date || new Date(),
+                        }))
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
-          </div>
-          <div>
-            <Label className="mb-2 block">Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.dueDate ? (
-                    format(formData.dueDate, "PPP")
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={formData.dueDate}
-                  onSelect={(date) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      dueDate: date || new Date(),
-                    }))
-                  }
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
           </div>
         </div>
       </motion.div>
