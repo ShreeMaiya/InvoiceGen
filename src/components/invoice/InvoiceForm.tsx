@@ -76,7 +76,14 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Handle numeric fields
+    if (name === "taxRate" || name === "discount") {
+      const numValue = value === "" ? undefined : parseFloat(value);
+      setFormData((prev) => ({ ...prev, [name]: numValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleItemChange = (
@@ -148,7 +155,18 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Convert all numeric values properly
+    const submissionData = {
+      ...formData,
+      taxRate: parseFloat(formData.taxRate?.toString() || "0"),
+      discount: parseFloat(formData.discount?.toString() || "0"),
+      items: formData.items.map(item => ({
+        ...item,
+        rate: parseFloat(item.rate?.toString() || "0"),
+        quantity: parseInt(item.quantity?.toString() || "1")
+      }))
+    };
+    onSubmit(submissionData);
   };
 
   return (
@@ -348,102 +366,79 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="space-y-4"
       >
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Items</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addItem}
-            className="flex items-center gap-1"
-          >
-            <Plus className="h-4 w-4" />
-            Add Item
-          </Button>
-        </div>
-
+        <h3 className="text-lg font-medium mb-4">Items</h3>
         <div className="space-y-4">
-          {formData.items.map((item, index) => (
+          {formData.items.map((item) => (
             <Card key={item.id}>
               <CardContent className="pt-6">
-                <div className="flex items-start justify-between mb-4">
-                  <h4 className="font-medium">Item #{index + 1}</h4>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeItem(item.id)}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor={`item-name-${item.id}`}>Item Name</Label>
-                    <Input
-                      id={`item-name-${item.id}`}
-                      value={item.name}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "name", e.target.value)
-                      }
-                      placeholder="Item name"
-                      required
-                    />
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor={`item-name-${item.id}`}>Item Name</Label>
+                      <Input
+                        id={`item-name-${item.id}`}
+                        value={item.name}
+                        onChange={(e) =>
+                          handleItemChange(item.id, "name", e.target.value)
+                        }
+                        placeholder="Item name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`item-quantity-${item.id}`}>Quantity</Label>
+                      <Input
+                        id={`item-quantity-${item.id}`}
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          handleItemChange(
+                            item.id,
+                            "quantity",
+                            parseInt(e.target.value) || 1
+                          )
+                        }
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor={`item-desc-${item.id}`}>Description</Label>
-                    <Input
-                      id={`item-desc-${item.id}`}
-                      value={item.description}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "description", e.target.value)
-                      }
-                      placeholder="Description"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor={`item-price-${item.id}`}>Price</Label>
+                      <Input
+                        id={`item-price-${item.id}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.rate || ""}
+                        onChange={(e) =>
+                          handleItemChange(
+                            item.id,
+                            "rate",
+                            parseFloat(e.target.value) || undefined
+                          )
+                        }
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`item-description-${item.id}`}>Description</Label>
+                      <Input
+                        id={`item-description-${item.id}`}
+                        value={item.description}
+                        onChange={(e) =>
+                          handleItemChange(item.id, "description", e.target.value)
+                        }
+                        placeholder="Item description"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor={`item-qty-${item.id}`}>Quantity</Label>
-                    <Input
-                      id={`item-qty-${item.id}`}
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleItemChange(
-                          item.id,
-                          "quantity",
-                          parseInt(e.target.value) || 1
-                        )
-                      }
-                      required
-                    />
+                  <div className="mt-4 text-right">
+                    <p className="text-sm text-muted-foreground">
+                      Subtotal: {formatCurrency(item.quantity * (item.rate || 0))}
+                    </p>
                   </div>
-                  <div>
-                    <Label htmlFor={`item-rate-${item.id}`}>Rate</Label>
-                    <Input
-                      id={`item-rate-${item.id}`}
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.rate || ""}
-                      onChange={(e) =>
-                        handleItemChange(
-                          item.id,
-                          "rate",
-                          parseFloat(e.target.value) || undefined
-                        )
-                      }
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="mt-4 text-right">
-                  <p className="text-sm text-muted-foreground">
-                    Subtotal: {formatCurrency(item.quantity * (item.rate || 0))}
-                  </p>
                 </div>
               </CardContent>
             </Card>
