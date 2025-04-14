@@ -34,18 +34,16 @@ const InvoicePreview = ({ data, onBack }: InvoicePreviewProps) => {
         description: "Please wait while we generate your invoice...",
       });
 
-      // Optimized canvas options for mobile
-      const canvasOptions = {
-        scale: isMobile ? 1 : 2, // Lower scale for mobile to reduce size
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
         useCORS: true,
         logging: false,
         scrollX: 0,
         scrollY: 0,
         windowWidth: document.documentElement.offsetWidth,
         windowHeight: document.documentElement.offsetHeight,
-      };
+      });
 
-      const canvas = await html2canvas(invoiceRef.current, canvasOptions);
       const imgData = canvas.toDataURL("image/png");
       
       // PDF configuration
@@ -59,29 +57,19 @@ const InvoicePreview = ({ data, onBack }: InvoicePreviewProps) => {
       // Calculate dimensions for proper fitting
       const pdfWidth = 210; // A4 width in mm
       const pdfHeight = 297; // A4 height in mm
-      
-      // Improved mobile scaling - smaller content width for mobile
-      const contentWidth = isMobile ? (pdfWidth - 30) : (pdfWidth - 20);
+      const contentWidth = pdfWidth - 20; // Consistent margins for all devices
       const aspectRatio = canvas.height / canvas.width;
       const contentHeight = contentWidth * aspectRatio;
       
       // Margins
-      const xPos = isMobile ? 15 : 10; // Increased margins for mobile
+      const xPos = 10;
       const yPos = 10;
       
       // Add image to PDF
       pdf.addImage(imgData, "PNG", xPos, yPos, contentWidth, contentHeight);
       
-      // For mobile, we'll compress the content to fit on a single page if possible
-      if (isMobile && contentHeight > pdfHeight - 20) {
-        // Clear the page and add the image with adjusted height to fit one page
-        pdf.deletePage(1);
-        pdf.addPage();
-        const adjustedHeight = pdfHeight - 20;
-        const adjustedWidth = adjustedHeight / aspectRatio;
-        pdf.addImage(imgData, "PNG", xPos, yPos, adjustedWidth, adjustedHeight);
-      } else if (contentHeight > pdfHeight - 20) {
-        // For desktop or if content is still very long, use multiple pages
+      // Handle multi-page PDF
+      if (contentHeight > pdfHeight - 20) {
         const pageCount = Math.ceil(contentHeight / (pdfHeight - 20));
         for (let i = 1; i < pageCount; i++) {
           pdf.addPage();
