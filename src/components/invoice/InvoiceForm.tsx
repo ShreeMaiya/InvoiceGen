@@ -367,7 +367,19 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <h3 className="text-lg font-medium mb-4">Items</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">Items</h3>
+          <Button
+            type="button"
+            onClick={addItem}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
+        </div>
         <div className="space-y-4">
           {formData.items.map((item) => (
             <Card key={item.id}>
@@ -434,7 +446,17 @@ const InvoiceForm = ({ onSubmit }: InvoiceFormProps) => {
                       />
                     </div>
                   </div>
-                  <div className="mt-4 text-right">
+                  <div className="flex justify-between items-center mt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive/90"
+                      onClick={() => removeItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
                     <p className="text-sm text-muted-foreground">
                       Subtotal: {formatCurrency(item.quantity * (item.rate || 0))}
                     </p>
