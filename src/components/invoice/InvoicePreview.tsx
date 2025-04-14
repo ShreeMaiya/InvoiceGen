@@ -22,7 +22,7 @@ interface InvoicePreviewProps {
 const InvoicePreview = ({ data, onBack }: InvoicePreviewProps) => {
   const { toast } = useToast();
   const invoiceRef = React.useRef<HTMLDivElement>(null);
-  const { calculateSubtotal, calculateTax, calculateTotal } = useInvoiceCalculations(data);
+  const { calculateSubtotal, calculateDiscount, calculateNetPrice, calculateTax, calculateTotal } = useInvoiceCalculations(data);
   const isMobile = useIsMobile();
 
   const downloadPDF = async () => {
@@ -129,6 +129,8 @@ const InvoicePreview = ({ data, onBack }: InvoicePreviewProps) => {
             <InvoiceTotals 
               data={data}
               calculateSubtotal={calculateSubtotal}
+              calculateDiscount={calculateDiscount}
+              calculateNetPrice={calculateNetPrice}
               calculateTax={calculateTax}
               calculateTotal={calculateTotal}
             />

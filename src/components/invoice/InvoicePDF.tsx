@@ -97,24 +97,28 @@ const InvoicePDF = ({ invoiceData }: InvoicePDFProps) => {
           <Text style={styles.summaryLabel}>Subtotal:</Text>
           <Text style={styles.summaryValue}>{formatCurrency(calculateSubtotal())}</Text>
         </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>
-            Discount ({invoiceData.discount || 0}%):
-          </Text>
-          <Text style={styles.summaryValue}>- {formatCurrency(calculateDiscount())}</Text>
-        </View>
+        {invoiceData.discount > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              Discount ({invoiceData.discount || 0}%):
+            </Text>
+            <Text style={styles.summaryValue}>- {formatCurrency(calculateDiscount())}</Text>
+          </View>
+        )}
         <View style={[styles.summaryRow, styles.netPrice]}>
           <Text style={[styles.summaryLabel, styles.mediumText]}>Net Price:</Text>
           <Text style={[styles.summaryValue, styles.mediumText]}>
             {formatCurrency(calculateNetPrice())}
           </Text>
         </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>
-            Tax ({invoiceData.taxRate || 0}%):
-          </Text>
-          <Text style={styles.summaryValue}>+ {formatCurrency(calculateTax())}</Text>
-        </View>
+        {invoiceData.taxRate > 0 && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>
+              Tax ({invoiceData.taxRate || 0}%):
+            </Text>
+            <Text style={styles.summaryValue}>+ {formatCurrency(calculateTax())}</Text>
+          </View>
+        )}
         <View style={[styles.summaryRow, styles.totalRow]}>
           <Text style={styles.totalLabel}>Total:</Text>
           <Text style={styles.totalValue}>{formatCurrency(calculateTotal())}</Text>
@@ -250,4 +254,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default InvoicePDF; 
+export default InvoicePDF;
