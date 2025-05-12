@@ -34,11 +34,11 @@ const InvoicePDF = ({ invoiceData }: InvoicePDFProps) => {
   };
 
   // Helper function to safely render text
-  const renderText = (content: string | number | null | undefined) => {
-    if (content === null || content === undefined || content === "") {
-      return "0";
+  const renderText = (text: string | undefined): string => {
+    if (text === undefined || text === null || text === '') {
+      return '';  // Return empty string for undefined, null or empty values
     }
-    return content.toString();
+    return String(text); // Convert to string for non-empty values
   };
 
   // Simple number formatting function
@@ -106,8 +106,8 @@ const InvoicePDF = ({ invoiceData }: InvoicePDFProps) => {
               <Text style={[styles.itemColumn, { flex: 1 }]}>Amount</Text>
             </View>
             {invoiceData.items.map((item) => {
-              const rate = parseFloat(renderText(item.rate));
-              const quantity = parseFloat(renderText(item.quantity));
+              const rate = parseFloat(renderText(item.rate?.toString()));
+              const quantity = parseFloat(renderText(item.quantity?.toString()));
               return (
                 <View key={item.id} style={styles.itemRow}>
                   <Text style={[styles.itemColumn, { flex: 2 }]}>{renderText(item.name)}</Text>
@@ -133,7 +133,7 @@ const InvoicePDF = ({ invoiceData }: InvoicePDFProps) => {
             {invoiceData.discount > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
-                  Discount ({renderText(invoiceData.discount)}%):
+                  Discount ({renderText(invoiceData.discount?.toString())}%):
                 </Text>
                 <Text style={styles.summaryValue}>- {formatCurrencyForPDF(calculateDiscount())}</Text>
               </View>
@@ -147,7 +147,7 @@ const InvoicePDF = ({ invoiceData }: InvoicePDFProps) => {
             {invoiceData.taxRate > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>
-                  Tax ({renderText(invoiceData.taxRate)}%):
+                  Tax ({renderText(invoiceData.taxRate?.toString())}%):
                 </Text>
                 <Text style={styles.summaryValue}>+ {formatCurrencyForPDF(calculateTax())}</Text>
               </View>
